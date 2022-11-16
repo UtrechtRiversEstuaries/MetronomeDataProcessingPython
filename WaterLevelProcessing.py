@@ -23,6 +23,10 @@ import pandas as pd
 pwd = r'C:\Users\7062052\OneDrive - Universiteit Utrecht\Open Science Metronome\MetronomeWorkingDirectory'
 # the current experiment (three digit number, in case of pilots use e.g. '052\Pilot1' as this string is used for directory paths)
 exp = '049'
+# the tilting period in seconds
+tiltperiod = 40
+# the samplng frequency of the water level sensors in Hertz
+frequency = 10
 
 # %% read directory and files
 wlpath = pwd + r'\01metronome_experiments\Exp' + exp + r'\raw_data\waterlevel_sensors' #path to the water level directory
@@ -113,7 +117,7 @@ for i,it in enumerate(greenfiles):
         greendata[i].append(tempwldata) #store the data in a similar structure as the file names
         allwldata = pd.concat([allwldata,tempwldata]) #append the data of the current file to all the previos data
 
-#%% Filter for outliers
+#%% Filter for outliers and average over tidal cycles
 
 tiltvalrange = np.percentile(alltiltdata["Range[mm]"],[2, 98]) #2nd and 98th percentile are extracted from all the tilting data
 #the valid range for the tilting measurements is set to the 2nd and 98th percentile minus respectively plus 1/100 of the difference between them
@@ -123,6 +127,11 @@ wlvalrange = np.percentile(allwldata["Range[mm]"],[2, 98]) #2nd and 98th percent
 #the valid range for the water level measurements is set to the 2nd and 98th percentile minus respectively plus 1/100 of the difference between them
 wlvalrange = [wlvalrange[0]-(wlvalrange[1]-wlvalrange[0])/100, wlvalrange[1]+(wlvalrange[1]-wlvalrange[0])/100]
 
+tiltrange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the tilting data
+bluerange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the water level data of the blue sensor
+orangerange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the water level data of the orange sensor
+greenrange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the water level data of the green sensor
+
 #all values outside the valid range are set to nan in all the data
 #loop through all the tilt files  
 for i,it in enumerate(tiltdata):
@@ -130,22 +139,62 @@ for i,it in enumerate(tiltdata):
         tiltdata[i][j] = jt.where(jt["Range[mm]"] > tiltvalrange[0]) #set all values outside the given condition nan
         tiltdata[i][j] = tiltdata[i][j].where(tiltdata[i][j]["Range[mm]"] < tiltvalrange[1]) #set all values outside the given condition nan
         tiltdata[i][j] = tiltdata[i][j].where(tiltdata[i][j]["Range[mm]"] != 0) #set all values outside the given condition nan
+        fullcyclearray=[] #create empty list where the data of all fully measured tidal cycles can be stored
+        for k in range(math.floor(len(tiltdata[i][j])/(frequency*tiltperiod))): #loop through the full cycles
+            fullcyclearray.append(tiltdata[i][j][k*(frequency*tiltperiod):(k+1)*(frequency*tiltperiod)]["Range[mm]"].values) #append the measured values to the array
+            
+        tiltrange[i].append(np.nanmean(fullcyclearray, axis = 0)) #average the data of all full cycles and omit nan values
+        #the last cycle is not covered completely, so only the corresponding part of the data of the full cycles is taken into account in taking the average
+        tiltrange[i][j][0:(len(tiltdata[i][j])-(k+1)*frequency*tiltperiod)] = \
+            np.nanmean(np.vstack((np.tile([tiltrange[i][j][0:len(tiltdata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), tiltdata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
             
 #loop through all the files of the blue sensor
 for i,it in enumerate(bluedata):
     for j,jt in enumerate(bluedata[i]):
         bluedata[i][j] = jt.where(jt["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
         bluedata[i][j] = bluedata[i][j].where(bluedata[i][j]["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+        fullcyclearray=[] #create empty list where the data of all fully measured tidal cycles can be stored
+        for k in range(math.floor(len(bluedata[i][j])/(frequency*tiltperiod))): #loop through the full cycles
+            fullcyclearray.append(bluedata[i][j][k*(frequency*tiltperiod):(k+1)*(frequency*tiltperiod)]["Range[mm]"].values) #append the measured values to the array
+            
+        bluerange[i].append(np.nanmean(fullcyclearray, axis = 0)) #average the data of all full cycles and omit nan values
+        #the last cycle is not covered completely, so only the corresponding part of the data of the full cycles is taken into account in taking the average
+        bluerange[i][j][0:(len(bluedata[i][j])-(k+1)*frequency*tiltperiod)] = \
+            np.nanmean(np.vstack((np.tile([bluerange[i][j][0:len(bluedata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), bluedata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
         
 #loop through all the files of the orange sensor        
 for i,it in enumerate(orangedata):
     for j,jt in enumerate(orangedata[i]):
         orangedata[i][j] = jt.where(jt["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
         orangedata[i][j] = orangedata[i][j].where(orangedata[i][j]["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+        fullcyclearray=[] #create empty list where the data of all fully measured tidal cycles can be stored
+        for k in range(math.floor(len(orangedata[i][j])/(frequency*tiltperiod))): #loop through the full cycles
+            fullcyclearray.append(orangedata[i][j][k*(frequency*tiltperiod):(k+1)*(frequency*tiltperiod)]["Range[mm]"].values) #append the measured values to the array
+            
+        orangerange[i].append(np.nanmean(fullcyclearray, axis = 0)) #average the data of all full cycles and omit nan values
+        #the last cycle is not covered completely, so only the corresponding part of the data of the full cycles is taken into account in taking the average
+        orangerange[i][j][0:(len(orangedata[i][j])-(k+1)*frequency*tiltperiod)] = \
+            np.nanmean(np.vstack((np.tile([orangerange[i][j][0:len(orangedata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), orangedata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
                     
 #loop through all the files of the green sensor
 for i,it in enumerate(greendata):
     for j,jt in enumerate(greendata[i]):
         greendata[i][j] = jt.where(jt["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
         greendata[i][j] = greendata[i][j].where(greendata[i][j]["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+        fullcyclearray=[] #create empty list where the data of all fully measured tidal cycles can be stored
+        for k in range(math.floor(len(greendata[i][j])/(frequency*tiltperiod))): #loop through the full cycles
+            fullcyclearray.append(greendata[i][j][k*(frequency*tiltperiod):(k+1)*(frequency*tiltperiod)]["Range[mm]"].values) #append the measured values to the array
+            
+        greenrange[i].append(np.nanmean(fullcyclearray, axis = 0)) #average the data of all full cycles and omit nan values
+        #the last cycle is not covered completely, so only the corresponding part of the data of the full cycles is taken into account in taking the average
+        greenrange[i][j][0:(len(greendata[i][j])-(k+1)*frequency*tiltperiod)] = \
+            np.nanmean(np.vstack((np.tile([greenrange[i][j][0:len(greendata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), greendata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
+
+#%% Smooth data
+
+
+
+
+
+
                     
