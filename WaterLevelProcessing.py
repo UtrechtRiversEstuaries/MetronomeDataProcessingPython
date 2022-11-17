@@ -17,6 +17,7 @@ import ctypes
 import statistics
 import os
 import pandas as pd
+import scipy as sci
 
 # %% Input - to be filled in individually
 # your personal working directory in which you use the standard folder structure:
@@ -191,6 +192,41 @@ for i,it in enumerate(greendata):
             np.nanmean(np.vstack((np.tile([greenrange[i][j][0:len(greendata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), greendata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
 
 #%% Smooth data
+window = 100 #the filtering window for the Savitzky-Golay filter
+polyord = 3 #polynomial's order for the Savitzky-Golay filter
+funcx = lambda a : a.nonzero()[0] #functionion needed to interpolate nans
+
+#loop through all the tilt files  
+for i,it in enumerate(tiltrange):
+    for j,jt in enumerate(tiltrange[i]):
+        nans = np.isnan(tiltrange[i][j])
+        tiltrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), tiltrange[i][j][~nans])
+        tiltrange[i][j] = sci.signal.savgol_filter(tiltrange[i][j],window,polyord)
+      
+for i,it in enumerate(bluerange):
+    for j,jt in enumerate(bluerange[i]):
+        nans = np.isnan(bluerange[i][j])
+        bluerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), bluerange[i][j][~nans])
+        bluerange[i][j] = sci.signal.savgol_filter(bluerange[i][j],window,polyord)
+
+for i,it in enumerate(orangerange):
+    for j,jt in enumerate(orangerange[i]):
+        nans = np.isnan(orangerange[i][j])
+        orangerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), orangerange[i][j][~nans])
+        orangerange[i][j] = sci.signal.savgol_filter(orangerange[i][j],window,polyord)
+
+for i,it in enumerate(greenrange):
+    for j,jt in enumerate(greenrange[i]):
+        nans = np.isnan(greenrange[i][j])
+        greenrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), greenrange[i][j][~nans])
+        greenrange[i][j] = sci.signal.savgol_filter(greenrange[i][j],window,polyord)
+
+#%% Sort data to normalize it to tilt
+
+#%% Plotting
+
+time = np.linspace(0,tiltperiod,frequency*tiltperiod)
+plt.plot(time,bluerange[1][2])
 
 
 
