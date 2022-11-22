@@ -222,11 +222,44 @@ for i,it in enumerate(greenrange):
         greenrange[i][j] = sci.signal.savgol_filter(greenrange[i][j],window,polyord)
 
 #%% Sort data to normalize it to tilt
+for i,it in enumerate(tiltrange):
+    for j,jt in enumerate(tiltrange[i]):
+        index = np.argmin(tiltrange[i][j]) #find index of peak flood
+        end = tiltrange[i][j][0:index] #everything before peak flood
+        start = tiltrange[i][j][index:] #everything after peak flood
+        tiltrange[i][j] = np.hstack((start, end)) #rearrange with peak flood at the beginning
+        #do the same with the water level data based on the peak flood index from the tilt
+        end = bluerange[i][j][0:index]
+        start = bluerange[i][j][index:]
+        bluerange[i][j] = np.hstack((start, end))
+        end = orangerange[i][j][0:index]
+        start = orangerange[i][j][index:]
+        orangerange[i][j] = np.hstack((start, end))
+        end = greenrange[i][j][0:index]
+        start = greenrange[i][j][index:]
+        greenrange[i][j] = np.hstack((start, end))
+
+#%% Putting all data together
+#create array of zeros with the following dimensions: 
+    # - x: number of measurements from the last measuring cycle, assuming that this will be the maximum number
+    # - y: 3, the number of sensors
+    # - timeseries: number of measuring points in one tidal cycle
+    # - experiment time: number of measuring events throughout the experiment
+wldata = np.zeros((len(bluerange[-1]), 3, frequency*tiltperiod, len(tiltingcycles)))
+
+#Saving all water level data in one array:
+for i in range(np.shape(wldata)[3]):
+    for j in range(len(bluerange[i])):
+        wldata[-j-1,0,:,i] = bluerange[i][-j-1]
+        wldata[-j-1,1,:,i] = orangerange[i][-j-1]
+        wldata[-j-1,2,:,i] = greenrange[i][-j-1]
+        
+#%% Saving data
+
 
 #%% Plotting
-
 time = np.linspace(0,tiltperiod,frequency*tiltperiod)
-plt.plot(time,bluerange[1][2])
+plt.plot(time,tiltrange[1][2])
 
 
 
