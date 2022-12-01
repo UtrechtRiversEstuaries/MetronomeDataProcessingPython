@@ -1,35 +1,56 @@
 # -*- coding: utf-8 -*-
 """
 This script processes the water level measurements from the Metronome.
-Created on Wed Nov  9 11:49:51 2022
+
+The raw water level data is read from the corresponding directory and then:
+ - filtered for outliers
+ - averaged over the usually three measured cycles
+ - sorted to align all data equally with the tilt
+ - smoothed
+ - put in relation to the still water level
+ - saved as netCDF-file
+ - plotted
+
+Note: 
+ - The data should be saved in subfolders thst are named e.g. 
+     '1500cycles_tilting' and there should be at least one measurement of the 
+     still water level
+ - The final data does not contain the y-position of the sensors for the 
+     different measurements. Make sure to have this data elsewhere.
+ - The folder 'water_level' should already exist in the directory 
+     'processed_data' of the corresponding experiment, otherwise the processed
+     data is not saved.
+ - The raw data files should be named as follows: 
+     <cyclesnumber>_<x-metres>.<x-decimetres>_<tilting or still>_<automatic time stamp>_LT.s<sensornumber>.csv
+    
+
+Code written in November 2022
 
 @author: Jan-Eike Rossius
 """
 
-# %% importing libraries
+# %% Importing libraries
 import numpy as np
 import netCDF4 as nc
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
-from IPython import get_ipython; 
 import math  
-import ctypes
-import statistics
 import os
 import pandas as pd
 import scipy as sci
+from datetime import datetime
+import itertools
 
 # %% Input - to be filled in individually
 # your personal working directory in which you use the standard folder structure:
 pwd = r'C:\Users\7062052\OneDrive - Universiteit Utrecht\Open Science Metronome\MetronomeWorkingDirectory'
 # the current experiment (three digit number, in case of pilots use e.g. '052\Pilot1' as this string is used for directory paths)
-exp = '049'
+exp = '051'
 # the tilting period in seconds
 tiltperiod = 40
 # the samplng frequency of the water level sensors in Hertz
 frequency = 10
 
-# %% read directory and files
+# %% Read directory and files
 wlpath = pwd + r'\01metronome_experiments\Exp' + exp + r'\raw_data\waterlevel_sensors' #path to the water level directory
 elems = os.listdir(wlpath) #read elements in directory
 tilting = [] #create empty list for tilting measuremens directory
@@ -59,6 +80,7 @@ for e in elems: #loop through elements of directory
             stillcycles.append(int(numstring)) #add the cycle number to the still list
 
 nummes = [] #create empty list for number of measuremnts along the flume per cycle
+xpos = [[] for j in range(len(tilting))] #create empty list for the x-positions of the measurements
 tiltfiles = [[] for j in range(len(tilting))] #create empty list for files containing the tilting data
 bluefiles = [[] for j in range(len(tilting))] #create empty list for files containing the water level data of the blue sensor (hall side, smaller y)
 orangefiles = [[] for j in range(len(tilting))] #create empty list for files containing the water level data of the orange sensor (middle, medium y)
@@ -83,7 +105,17 @@ for i,t in enumerate(tilting): #loop thtough all measurement timesteps
             orangefiles[i].append(f)
         elif '.s04' in f:
             bluefiles[i].append(f)
-   
+
+files = os.listdir(wlpath + r'\\' + still[0]) #find content of the first folder with still water measurements. If there are more folders for still water measurements, they are ignored
+#loop through files and sort them in arrays corresponding to sensor
+for f in files:
+    if '.s02' in f:
+        greenstill = f
+    elif '.s03' in f:
+        orangestill = f
+    elif '.s04' in f:
+        bluestill = f
+    
 #loop through all the tilt files  
 for i,it in enumerate(tiltfiles):
     for j,jt in enumerate(tiltfiles[i]):
@@ -93,6 +125,12 @@ for i,it in enumerate(tiltfiles):
             alltiltdata = pd.concat([alltiltdata,tempwldata]) #append the data of the current file to all the previos data
         else: #if alltiltdata does not yet exist, it is created
             alltiltdata = tempwldata
+        try:
+            xpos[i].append(float(jt[jt.find(".")-2:jt.find(".")+2]))
+        except ValueError:
+            xmetre = int(jt[jt.find("-")-2:jt.find("-")])
+            xdecimetre = int(jt[jt.find("-")+1:jt.find("-")+2])
+            xpos[i].append((xmetre + xdecimetre / 10))
 
 #loop through all the files of the blue sensor
 for i,it in enumerate(bluefiles):
@@ -118,15 +156,20 @@ for i,it in enumerate(greenfiles):
         greendata[i].append(tempwldata) #store the data in a similar structure as the file names
         allwldata = pd.concat([allwldata,tempwldata]) #append the data of the current file to all the previos data
 
-#%% Filter for outliers and average over tidal cycles
+#read data of the still water measurement
+bluestill = pd.read_csv(wlpath + r'\\' + still[0] + r'\\' + bluestill)
+orangestill = pd.read_csv(wlpath + r'\\' + still[0] + r'\\' + greenstill)
+greenstill = pd.read_csv(wlpath + r'\\' + still[0] + r'\\' + greenstill)
+
+# %% Filter for outliers and average over tidal cycles
 
 tiltvalrange = np.percentile(alltiltdata["Range[mm]"],[2, 98]) #2nd and 98th percentile are extracted from all the tilting data
 #the valid range for the tilting measurements is set to the 2nd and 98th percentile minus respectively plus 1/100 of the difference between them
 tiltvalrange = [tiltvalrange[0]-(tiltvalrange[1]-tiltvalrange[0])/100, tiltvalrange[1]+(tiltvalrange[1]-tiltvalrange[0])/100]
 
-wlvalrange = np.percentile(allwldata["Range[mm]"],[2, 98]) #2nd and 98th percentile are extracted from all the water level data
+wlvalrange = np.percentile(allwldata["Range[mm]"],[10, 90]) #2nd and 98th percentile are extracted from all the water level data
 #the valid range for the water level measurements is set to the 2nd and 98th percentile minus respectively plus 1/100 of the difference between them
-wlvalrange = [wlvalrange[0]-(wlvalrange[1]-wlvalrange[0])/100, wlvalrange[1]+(wlvalrange[1]-wlvalrange[0])/100]
+wlvalrange = [wlvalrange[0]-(wlvalrange[1]-wlvalrange[0])/10, wlvalrange[1]+(wlvalrange[1]-wlvalrange[0])/10]
 
 tiltrange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the tilting data
 bluerange = [[] for j in range(len(tilting))] #create empty list for the averaged range measuremnts of the water level data of the blue sensor
@@ -191,37 +234,17 @@ for i,it in enumerate(greendata):
         greenrange[i][j][0:(len(greendata[i][j])-(k+1)*frequency*tiltperiod)] = \
             np.nanmean(np.vstack((np.tile([greenrange[i][j][0:len(greendata[i][j])-(k+1)*frequency*tiltperiod]],(k+1,1)), greendata[i][j][(k+1)*(frequency*tiltperiod):]["Range[mm]"].values)), axis = 0)
 
-#%% Smooth data
-window = 100 #the filtering window for the Savitzky-Golay filter
-polyord = 3 #polynomial's order for the Savitzky-Golay filter
-funcx = lambda a : a.nonzero()[0] #functionion needed to interpolate nans
+#still water data
+bluestill = bluestill.where(bluestill["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
+bluestill = bluestill.where(bluestill["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+orangestill = orangestill.where(orangestill["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
+orangestill = orangestill.where(orangestill["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+greenstill = greenstill.where(greenstill["Range[mm]"] > wlvalrange[0]) #set all values outside the given condition nan
+greenstill = greenstill.where(greenstill["Range[mm]"] < wlvalrange[1]) #set all values outside the given condition nan
+#average data
+stillwaterlevel = np.nanmean(np.hstack((bluestill["Range[mm]"].values, orangestill["Range[mm]"].values, greenstill["Range[mm]"].values)))
 
-#loop through all the tilt files  
-for i,it in enumerate(tiltrange):
-    for j,jt in enumerate(tiltrange[i]):
-        nans = np.isnan(tiltrange[i][j])
-        tiltrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), tiltrange[i][j][~nans])
-        tiltrange[i][j] = sci.signal.savgol_filter(tiltrange[i][j],window,polyord)
-      
-for i,it in enumerate(bluerange):
-    for j,jt in enumerate(bluerange[i]):
-        nans = np.isnan(bluerange[i][j])
-        bluerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), bluerange[i][j][~nans])
-        bluerange[i][j] = sci.signal.savgol_filter(bluerange[i][j],window,polyord)
-
-for i,it in enumerate(orangerange):
-    for j,jt in enumerate(orangerange[i]):
-        nans = np.isnan(orangerange[i][j])
-        orangerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), orangerange[i][j][~nans])
-        orangerange[i][j] = sci.signal.savgol_filter(orangerange[i][j],window,polyord)
-
-for i,it in enumerate(greenrange):
-    for j,jt in enumerate(greenrange[i]):
-        nans = np.isnan(greenrange[i][j])
-        greenrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), greenrange[i][j][~nans])
-        greenrange[i][j] = sci.signal.savgol_filter(greenrange[i][j],window,polyord)
-
-#%% Sort data to normalize it to tilt
+# %% Sort data to normalize it to tilt
 for i,it in enumerate(tiltrange):
     for j,jt in enumerate(tiltrange[i]):
         index = np.argmin(tiltrange[i][j]) #find index of peak flood
@@ -238,32 +261,196 @@ for i,it in enumerate(tiltrange):
         end = greenrange[i][j][0:index]
         start = greenrange[i][j][index:]
         greenrange[i][j] = np.hstack((start, end))
+        
+# %% Smooth data
+window = 50 #the filtering window for the Savitzky-Golay filter
+polyord = 3 #polynomial's order for the Savitzky-Golay filter
+funcx = lambda a : a.nonzero()[0] #functionion needed to interpolate nans
 
-#%% Putting all data together
+#loop through all the tilt files  
+for i,it in enumerate(tiltrange):
+    for j,jt in enumerate(tiltrange[i]):
+        nans = np.isnan(tiltrange[i][j])
+        tiltrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), tiltrange[i][j][~nans]) #interpolate nan values
+        tiltrange[i][j] = sci.signal.savgol_filter(tiltrange[i][j],window,polyord) #smooth the data with a Savitzki-Golay-filter
+      
+for i,it in enumerate(bluerange):
+    for j,jt in enumerate(bluerange[i]):
+        try:
+            nans = np.isnan(bluerange[i][j])
+            bluerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), bluerange[i][j][~nans]) #interpolate nan values
+            bluerange[i][j] = sci.signal.savgol_filter(bluerange[i][j],window,polyord) #smooth the data with a Savitzki-Golay-filter
+        except ValueError:
+            print('A measurement with only invalid values occured')
+
+for i,it in enumerate(orangerange):
+    for j,jt in enumerate(orangerange[i]):
+        try:
+            nans = np.isnan(orangerange[i][j])
+            orangerange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), orangerange[i][j][~nans]) #interpolate nan values
+            orangerange[i][j] = sci.signal.savgol_filter(orangerange[i][j],window,polyord) #smooth the data with a Savitzki-Golay-filter
+        except ValueError:
+            print('A measurement with only invalid values occured')
+
+for i,it in enumerate(greenrange):
+    for j,jt in enumerate(greenrange[i]):
+        try:
+            nans = np.isnan(greenrange[i][j])
+            greenrange[i][j][nans]= np.interp(funcx(nans), funcx(~nans), greenrange[i][j][~nans]) #interpolate nan values
+            greenrange[i][j] = sci.signal.savgol_filter(greenrange[i][j],window,polyord) #smooth the data with a Savitzki-Golay-filter
+        except ValueError:
+            print('A measurement with only invalid values occured')
+            
+# %% Substracting values from still waterlevel to have actual water levels and not measured ranges
+for i,it in enumerate(bluerange):
+    for j,jt in enumerate(bluerange[i]):
+        bluerange[i][j] = stillwaterlevel - bluerange[i][j]
+
+for i,it in enumerate(orangerange):
+    for j,jt in enumerate(orangerange[i]):
+        orangerange[i][j] = stillwaterlevel - orangerange[i][j]
+        
+for i,it in enumerate(greenrange):
+    for j,jt in enumerate(greenrange[i]):
+        greenrange[i][j] = stillwaterlevel - greenrange[i][j]
+        
+# %% Putting all data together
+#find unique x-positions
+xunique = np.unique(np.array(list(itertools.chain(*xpos))))
+
 #create array of zeros with the following dimensions: 
     # - x: number of measurements from the last measuring cycle, assuming that this will be the maximum number
     # - y: 3, the number of sensors
     # - timeseries: number of measuring points in one tidal cycle
     # - experiment time: number of measuring events throughout the experiment
-wldata = np.zeros((len(bluerange[-1]), 3, frequency*tiltperiod, len(tiltingcycles)))
+wldata = np.full((len(xunique), 3, frequency*tiltperiod, len(tiltingcycles)),np.nan)
 
 #Saving all water level data in one array:
 for i in range(np.shape(wldata)[3]):
     for j in range(len(bluerange[i])):
-        wldata[-j-1,0,:,i] = bluerange[i][-j-1]
-        wldata[-j-1,1,:,i] = orangerange[i][-j-1]
-        wldata[-j-1,2,:,i] = greenrange[i][-j-1]
-        
-#%% Saving data
+        wlx = np.where(xunique==xpos[i][j])[0][0] #find correct x-position
+        wldata[wlx,0,:,i] = bluerange[i][j]
+        wldata[wlx,1,:,i] = orangerange[i][j]
+        wldata[wlx,2,:,i] = greenrange[i][j]
 
-
-#%% Plotting
+#creating a variable for the time (measured time series)
 time = np.linspace(0,tiltperiod,frequency*tiltperiod)
-plt.plot(time,tiltrange[1][2])
 
+#creating a variable for the tilt
+for i,it in enumerate(tiltrange):
+    for j,jt in enumerate(tiltrange[i]):
+        if i==0 & j==0:
+            alltilt = tiltrange[i][j]
+        else:
+            alltilt=np.vstack([alltilt, tiltrange[i][j]])
+            
+tilt = np.nanmean(alltilt, axis = 0) #mean of all tilt curves as they are all aligned
+        
+# %% Saving data
+#creating netCDF-file for storing the data
+ncfile = nc.Dataset(pwd + r'\01metronome_experiments\Exp' + exp + r'\processed_data\water_level\WaterLevelDataExp' + exp + '.nc', 'w', format='NETCDF4')
 
+#adding global attributes
+ncfile.Conventions = 'mostly CF-1.8'
+ncfile.title = 'Water level data of Metronome experiment ' + exp
+ncfile.institution = 'Utrecht University'
+ncfile.source = 'Metronome ultrasonic water level sensors'
+ncfile.history = 'Processing of the raw data by filtering outliers, averaging over tidal cycles, smoothing and aligning to the tilt in Python on: ' + str(datetime.utcnow())
+ncfile.references = ''
+ncfile.comment = ''
 
+#create dimensios
+ncfile.createDimension('experiment_time', None)
+ncfile.createDimension('x', len(xunique))
+ncfile.createDimension('sensors', 3)
+ncfile.createDimension('measuring_time', frequency*tiltperiod)
 
+#create dimension variables
+x_var = ncfile.createVariable('x', np.float32, ('x',))
+x_var[:] = xunique
+x_var.units = 'm'
+x_var.axis = 'X' 
+x_var.long_name = 'x-locations along the flume of the measurements'
 
+sens_var = ncfile.createVariable('sensors', str, ('sensors',))
+sens_var[:] = np.array(['blue','orange','green'])
+sens_var.units = '-'
+sens_var.axis = 'Y' 
+sens_var.long_name = 'identifyer for the three individual water level sensors'
 
-                    
+etime_var = ncfile.createVariable('experiment_time', np.float32, ('experiment_time',))
+etime_var[:] = tiltingcycles
+etime_var.units = 'tidal_cycles'
+etime_var.axis = 'T' 
+etime_var.long_name = 'time throughout the course of the experiment'
+
+mtime_var = ncfile.createVariable('measuring_time', np.float32, ('measuring_time',))
+mtime_var[:] = time
+mtime_var.units = 'seconds'
+mtime_var.long_name = 'time of the measured time series'
+
+#creating tilt variable
+tilt_var = ncfile.createVariable('tilt_amplitude', np.float32, ('measuring_time',))
+tilt_var[:] = tilt
+tilt_var.units = 'mm'
+tilt_var.long_name = 'amplitude of the Metronome flume tilt at x=0'
+
+#creating water level variable
+wl_var = ncfile.createVariable('water_level', np.float32, ('x','sensors','measuring_time','experiment_time'))
+wl_var[:] = wldata
+wl_var.units = 'mm'
+wl_var.long_name = 'measured range of the water level sensors'
+
+#closing the netCDF-file
+ncfile.close()
+
+# %% Plotting
+# Defining general variables for plotting
+figheight = 450
+figwidth = 1200
+dpi = 150
+ymin = stillwaterlevel - wlvalrange[1] - 3 #upper limit of the water level plots
+ymax = stillwaterlevel - wlvalrange[0] + 3 #lower limit of the water level plots
+gridsize = (3, len(xunique)+2) #the gridsize for the subplots
+
+for step,cycle in enumerate(tiltingcycles):
+    fig = plt.figure(figsize=(figwidth/dpi, figheight/dpi), dpi=dpi) #creating the figure
+    ax = [None] * len(xunique) * 3 # pre-allocating array for axes objects
+    
+    #plotting the tilting curve
+    axtilt = plt.subplot2grid(gridsize, (1, 0))
+    axtilt.set(xticks=[0, tiltperiod/2, tiltperiod], yticks=[round(tiltvalrange[0],-1), 0, round(tiltvalrange[1],-1)], xlabel='time since\nstart of\ntidal cycle [s]', ylabel='tilting amplitude\nat x=0 [mm]')
+    axtilt.plot(time,tilt, color='black')
+    axtilt.set_xlim(0,tiltperiod)
+    axtilt.set_ylim(min([tiltvalrange[0],round(tiltvalrange[0],-1)]), max([tiltvalrange[1],round(tiltvalrange[1],-1)]))
+    axtilt.text(tiltperiod/2,tiltvalrange[0]+25,'flood',verticalalignment='center',horizontalalignment='center')
+    axtilt.text(tiltperiod/2,tiltvalrange[1]-25,'ebb',verticalalignment='center',horizontalalignment='center')
+    axtilt.text(-tiltperiod,3*tiltvalrange[1],str(cycle) + ' cycles',fontsize=14)
+    
+    for i in range(np.shape(wldata)[0]): #loop through the x-positions
+        ax[i] = plt.subplot2grid(gridsize, (0, i+2)) #create upper plot
+        ax[i].set_title(str(xunique[i]) + ' m') #x-position as title
+        ax[i].set(xticks=[])
+        if i>0: #no yticks except for lefternmost plot
+            ax[i].set(yticks=[])
+        ax[len(xunique)+i] = plt.subplot2grid(gridsize, (1, i+2)) #create middle plot
+        if i==0: #lefternmost plot gets yticks and ylabel
+            ax[len(xunique)+i].set(xticks=[])
+            ax[len(xunique)+i].set(ylabel='water level with respect to the\nstill water level [mm]')
+        else:
+            ax[len(xunique)+i].set(xticks=[], yticks=[])
+        ax[2*len(xunique)+i] = plt.subplot2grid(gridsize, (2, i+2)) #create lower plot
+        if i>0: #no yticks except for lefternmost plot
+            ax[2*len(xunique)+i].set(yticks=[])
+        if i==math.floor(len(xunique)/2): #xlabel roughly in the middle
+            ax[2*len(xunique)+i].set(xlabel='time since start of tidal cycle [s]')
+        ax[2*len(xunique)+i].set(xticks=[tiltperiod/4, 3*tiltperiod/4]) #define xticks
+        ax[i].plot(time,wldata[i,2,:,step], color='green') #set colour
+        ax[len(xunique)+i].plot(time,wldata[i,1,:,step], color='orange') #set colour
+        ax[2*len(xunique)+i].plot(time,wldata[i,0,:,step], color='blue') #set colour
+        ax[i].set_xlim(0,tiltperiod) #set xlimits
+        ax[len(xunique)+i].set_xlim(0,tiltperiod) #set xlimits
+        ax[2*len(xunique)+i].set_xlim(0,tiltperiod) #set xlimits
+        ax[i].set_ylim(ymin,ymax) #set ylimits
+        ax[len(xunique)+i].set_ylim(ymin,ymax) #set ylimits
+        ax[2*len(xunique)+i].set_ylim(ymin,ymax) #set ylimits
