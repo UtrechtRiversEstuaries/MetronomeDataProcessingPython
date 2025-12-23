@@ -1,0 +1,23 @@
+name: Metronome
+
+channels:
+  - conda-forge
+  - pyviz
+
+dependencies:
+  - python=3.10
+  - spyder
+  - matplotlib
+  - scipy
+  - scikit-image
+  - scikit-learn
+  - pandas
+  - imageio==2.19.3
+  - imageio-ffmpeg==0.4.7
+  - netCDF4
+  - tqdm
+  - pip:
+     - opencv-python
+     - colour-demosaicing
+     - Metashape-...-.whl
+     - lxml
