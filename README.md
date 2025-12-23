@@ -97,3 +97,9 @@ Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whol
 Z percentiles: The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. \[50])
 Z-axis: List of Gridded Z-data (meshgrid described in X-axis and Y-axis), stored per percentile. As the default is only median, this list contains by default only one grid.
 
+# Available datasets
+
+* https://public.yoda.uu.nl/geo/UU01/SGM22N.html
+
+Data supplement to "Remote sensing of a gantry-equipped facility: optimizing accuracy by integrating SfM photogrammetry and laserscan computer graphics through fixed base model geometry" ( http://ssrn.com/abstract=5649495).
+
