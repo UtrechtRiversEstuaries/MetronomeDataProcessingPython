@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This script processes the water level measurements from the Metronome.
 
