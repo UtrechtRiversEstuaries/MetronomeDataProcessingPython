@@ -14,17 +14,25 @@ Computes orthomosaics from overhead series through base model alignment and comb
 
 Computes a single orthomosaics from a specified overhead series (Experiment ...; cycle .....)
 
+* ### RandomForest2WaterDepthMaps.py
+
+Computes water depth maps (or derived elevation) from overhead orthomosaics through the random forest models and combines them into a single timelapse video
+
 * ### Function\_Metashape\_Overhead.py
 
-Ccontains the function that translate and Overhead series into an orthomosaic
+Contains the function that translate and Overhead series into an orthomosaic
 
 * ### Function\_colour\_correction\_overhead.py
 
-Contains the function that debayers raw overhead imagery
+Contains the function that debayers raw overhead imagery and the functions that transform RGB orthomosaics into various color spaces
 
 * ### Function\_create\_timelapse\_overhead.py
 
 Contains the function that creates the timelapse of Overhead series orthomosaics
+
+* ### Function\_create\_timelapse\_overhead\_depthMaps.py
+
+Contains the function that creates the timelapse of Overhead series water depth maps (or derived elevation) through Random Forest models
 
 * ### Function\_flatten\_list.py
 
@@ -84,6 +92,34 @@ Contains the functions that translate DSLR surveys into orthomosaics and DEMs
 
 This script processes the water level measurements from the Metronome.
 
+## RandomForestTrainingValidation
+
+* ### 1\_Overhead\_Orthomosaics\_Smooth.py
+
+Apply Gaussian smoothing of Overhead orthomosaics
+
+* ### 2\_Overhead\_Orthomosaics\_RGB2ColorSpace.py
+
+Transform smoothened RGB orhtomosaics into the relevant colorspaces
+
+* ### 3\_ConstructRandomForestModels.py
+
+Train the Random Forest Classifier and Regressor models with the Validation datasets of the various dye concentrations.
+
+* ### 4\_RandomForestValidationCalibrationSetup.py
+
+Validate the Random Forest models with the Training and Validation dastsets of their respective dye concentrations
+
+* ### 5\_RandomForestCrossModelValidation.py
+
+Apply cross-model validation of the Random Forest models with the Training and Validation datssets of the other dye concentrations
+
+* ### 6\_RandomForestValidationExperimentalDatasets.py
+
+Validate the Random Forest models with the Experimental datssets
+
+### Function\_create\_timelapse\_overhead\_dept
+
 # Software requirements
 
 * python 3.10 (not tested for later versions). Environment (yml) file included in the main branch
@@ -101,5 +137,13 @@ Z-axis: List of Gridded Z-data (meshgrid described in X-axis and Y-axis), stored
 
 * https://public.yoda.uu.nl/geo/UU01/SGM22N.html
 
-Data supplement to "Remote sensing of a gantry-equipped facility: optimizing accuracy by integrating SfM photogrammetry and laserscan computer graphics through fixed base model geometry" ( http://ssrn.com/abstract=5649495).
+Data supplement to "Remote sensing of a gantry-equipped facility: optimizing accuracy by integrating SfM photogrammetry and laserscan computer graphics through fixed base model geometry" (https://doi.org/10.1016/j.jag.2026.105098).
+
+
+
+* https://public.yoda.uu.nl/geo/UU01/2XBVKK.html
+
+Data supplement to "Quantitative water depth determination in large experimental timeseries through combining spectrophotometry and machine learning" (to be submitted).
+
+
 
