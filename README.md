@@ -14,17 +14,25 @@ Computes orthomosaics from overhead series through base model alignment and comb
 
 Computes a single orthomosaics from a specified overhead series (Experiment ...; cycle .....)
 
+* ### RandomForest2WaterDepthMaps.py
+
+Computeswater depth maps (or derived elevation maps) from overhead orthomosaics through the Random Forest models and combines them into a single timelapse video
+
 * ### Function\_Metashape\_Overhead.py
 
 Ccontains the function that translate and Overhead series into an orthomosaic
 
 * ### Function\_colour\_correction\_overhead.py
 
-Contains the function that debayers raw overhead imagery
+Contains the function that debayers raw overhead imagery and to conduct color space transformations from RGB to various color spaces
 
 * ### Function\_create\_timelapse\_overhead.py
 
 Contains the function that creates the timelapse of Overhead series orthomosaics
+
+* ### Function\_create\_timelapse\_overhead\_depthMaps.py
+
+Contains the function that creates the timelapse of Overhead series orthomosaics including water depth maps (or derived elevation maps) through the Random Forest models
 
 * ### Function\_flatten\_list.py
 
@@ -83,6 +91,34 @@ Contains the functions that translate DSLR surveys into orthomosaics and DEMs
 * ### WaterLevelProcessing.py
 
 This script processes the water level measurements from the Metronome.
+
+## RandomForestTrainingValidation
+
+* ### 1\_Overhead\_Orthomosaics\_Smooth.py
+
+Apply Gaussian smoothening to input Overhead orthomosaics
+
+* ### 2\_Overhead\_Orthomosaics\_RGB2ColorSpace.py
+
+Transform RGB orthomosaics into various colorspaces
+
+* ### 3\_ConstructRandomForestModels.py
+
+Tran the Random Forest (dry/wet) classifier and (water depth at wet) regressor models on the different dye concentration Training datasets
+
+* ### 4\_RandomForestValidataionCalibrationSetup.py
+
+Conduct the validations on the Random Forest models using the Training and Validation datasets
+
+* ### 5\_RandomForestCrossModelValidation.py
+
+Conduct the cross-model validations of the Random Forest models using the Training and Validation datasets of different dye concentrations
+
+* ### 6\_RandomForestValidationExperimentalDatasets.py
+
+Conduct the validations of the Random Forest models using the Experimental datasets
+
+
 
 # Software requirements
 
