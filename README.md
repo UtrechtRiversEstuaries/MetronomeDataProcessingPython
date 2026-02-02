@@ -137,5 +137,13 @@ Z-axis: List of Gridded Z-data (meshgrid described in X-axis and Y-axis), stored
 
 * https://public.yoda.uu.nl/geo/UU01/SGM22N.html
 
-Data supplement to "Remote sensing of a gantry-equipped facility: optimizing accuracy by integrating SfM photogrammetry and laserscan computer graphics through fixed base model geometry" ( http://ssrn.com/abstract=5649495).
+Data supplement to "Remote sensing of a gantry-equipped facility: optimizing accuracy by integrating SfM photogrammetry and laserscan computer graphics through fixed base model geometry" (https://doi.org/10.1016/j.jag.2026.105098).
+
+
+
+* https://public.yoda.uu.nl/geo/UU01/2XBVKK.html
+
+Data supplement to "Quantitative water depth determination in large experimental timeseries through combining spectrophotometry and machine learning" (to be submitted).
+
+
 
