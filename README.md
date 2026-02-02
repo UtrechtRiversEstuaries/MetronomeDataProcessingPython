@@ -91,7 +91,7 @@ This script processes the water level measurements from the Metronome.
 
 ## NetCDF file structure
 
-The .nc (NetCDF) files for the DEMs can be read using scripting software such as MATLAB, Python or R. Important is to know how these NetCDF files are constructed. They contain the following variables:
+The .nc (NetCDF) files for the DEMs and water depth maps can be read using scripting software such as MATLAB, Python or R. Important is to know how these NetCDF files are constructed. They contain the following variables:
 X-axis: (start,end,step) of the entire X-axis. In numpy you can extract the whole axis as follows: np.arange(xAxis\[0],xAxis\[1],xAxis\[2])
 Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whole axis as follows: np.arange(yAxis\[0],yAxis\[1],yAxis\[2])
 Z percentiles: The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. \[50])
