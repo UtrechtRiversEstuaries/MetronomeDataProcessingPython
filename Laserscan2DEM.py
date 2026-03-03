@@ -54,6 +54,7 @@ percentiles = [50]                               # Percentiles of elevations tha
 nrPoints = 0                                     # 1 if we want to store the number of points; 0 if we don't
 average = 0                                      # 1 if you want to interpolate with the average instead of the median, in this case, set percentiles to [50]
 domingCorrection = 1                             # 1 if we want to correct for doming (only when this is calibrated)
+correctRawDataGlitch = 1                         # 1 if you want to correct for the glitch of incorrect raw laserscan columns. It is recommended to first run at 0
 
 #%% Define the figure settings
 figwidth = 30 # inches
@@ -178,8 +179,8 @@ for cycle in chosen_folders:
     for i in range(len(gridResols)):
         # Only compute if all DEMs don't already exist though.
         if not os.path.exists(writefolders[i] + '\\' + DEM_name):
-            Compute_DEM(inputFiles,writefolders,DEM_name,gridResols,yCoordinates,xCoordinates,percentiles,nrPoints,
-                        laserCamLens,laserPointerTr,laserCamTr,average,domingCorrection,domingFunction)
+            Compute_DEM(currentFolder,inputFiles,writefolders,DEM_name,gridResols,yCoordinates,xCoordinates,percentiles,nrPoints,
+                        laserCamLens,laserPointerTr,laserCamTr,average,domingCorrection,domingFunction,correctRawDataGlitch)
             # Only one computation is necessary; within the function it also tests whether a DEM already exists
             break
     
