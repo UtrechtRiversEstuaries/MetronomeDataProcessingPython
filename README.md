@@ -4,6 +4,44 @@ Files for processing raw data from the tidal tilting flume 'The Metronome' in Py
 
 The main branch has the following sub-branches, with the following files:
 
+
+## python\_demos\_for\_loading\_dataset
+
+Contains demo scripts to load data from the dataset paper (to be submitted)
+
+* ### expMetaData.xlsx
+
+Contains all relevant metadata for each of the experiments, required as input for the python demo scripts below. Each scripts follows the Yoda repository directory structure
+
+* ### load\_DEMs.py
+
+Demo script to load laserscan DEMs
+
+* ### load\_Orthomosaics\_1Hz.py
+
+Demo script to load 1Hz Overhead orthomosaics
+
+* ### load\_Orthomosaics\_DSLR.py
+
+Demo script to load DSLR orthomosaics
+
+* ### load\_Orthomosaics\_PIV.py
+
+Demo script to load PIV Overhead orthomosaics
+
+* ### load\_Orthomosaics\_interval.py
+
+Demo script to load interval Overhead orthomosaics
+
+* ### load\_WaterDepthMaps\_1Hz.py
+
+Demo script to load water depth maps derived from 1Hz Overhead orthomosaics
+
+* ### load\_WaterDepthMaps\_interval.py
+
+Demo script to load water depth maps derived from interval Overhead orthomosaics
+
+
 ## Overhead\_scripts
 
 * ### Overhead\_Orthomosaics\_Metashape\_Timelapse.py
