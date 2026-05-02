@@ -156,8 +156,6 @@ Apply cross-model validation of the Random Forest models with the Training and V
 
 Validate the Random Forest models with the Experimental datssets
 
-### Function\_create\_timelapse\_overhead\_dept
-
 # Software requirements
 
 * python 3.10 (not tested for later versions). Environment (yml) file included in the main branch
