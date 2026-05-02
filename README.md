@@ -35,11 +35,11 @@ Demo script to load interval Overhead orthomosaics
 
 * ### load\_WaterDepthMaps\_1Hz.py
 
-Demo script to load water depth maps derived from 1Hz Overhead orthomosaics
+Demo script to load water depth maps derived from 1Hz Overhead orthomosaics, including masks
 
 * ### load\_WaterDepthMaps\_interval.py
 
-Demo script to load water depth maps derived from interval Overhead orthomosaics
+Demo script to load water depth maps derived from interval Overhead orthomosaics, including masks
 
 
 ## Overhead\_scripts
@@ -165,11 +165,19 @@ Validate the Random Forest models with the Experimental datssets
 
 ## NetCDF file structure
 
-The .nc (NetCDF) files for the DEMs and water depth maps can be read using scripting software such as MATLAB, Python or R. Important is to know how these NetCDF files are constructed. They contain the following variables:
-X-axis: (start,end,step) of the entire X-axis. In numpy you can extract the whole axis as follows: np.arange(xAxis\[0],xAxis\[1],xAxis\[2])
-Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whole axis as follows: np.arange(yAxis\[0],yAxis\[1],yAxis\[2])
-Z percentiles: The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. \[50])
-Z-axis: List of Gridded Z-data (meshgrid described in X-axis and Y-axis), stored per percentile. As the default is only median, this list contains by default only one grid.
+The .nc (NetCDF) files for the DEMs, masks and water depth maps can be read using scripting software such as MATLAB, Python or R. Important is to know how these NetCDF files are constructed. The Python demos provide code to loas these .nc files. They contain the following variables:
+
+X-axis: (start,end,step) of the entire X-axis. In numpy you can extract the whole axis as follows: np.arange(xAxis[0],xAxis[1],xAxis[2])
+
+Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whole axis as follows: np.arange(yAxis[0],yAxis[1],yAxis[2])
+
+Z percentiles (only for DEMs): The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. [50])
+
+Z-axis (for DEMs): List of Gridded elevation data (meshgrid described in X-axis and Y-axis), stored per percentile. As the default is only median, this list contains by default only one grid
+
+Z-axis (for water depth maps): List of Gridded water depth data (meshgrid described in X-axis and Y-axis). The dry cells in these water depth maps are represented by 0
+
+mask (only for masks): binary map yielding 1 for the relevant area (active area of the estuaries) and 0 for the masked out data (inactive bed + location bridge + delta + sea)
 
 # Available datasets
 
@@ -181,7 +189,10 @@ Data supplement to "Remote sensing of a gantry-equipped facility: optimizing acc
 
 * https://public.yoda.uu.nl/geo/UU01/2XBVKK.html
 
-Data supplement to "Quantitative water depth determination in large experimental timeseries through combining spectrophotometry and machine learning" (to be submitted).
+Data supplement to "Quantitative water depth determination in large experimental timeseries through combining spectrophotometry and machine learning" (https://doi.org/10.22541/essoar.177082648.88604562/v1).
+
+
+* DATASET PAPER TO BE SUBMITTED AND SOON AVAILABLE ON YODA
 
 
 
