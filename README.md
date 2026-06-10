@@ -5,6 +5,7 @@ Files for processing raw data from the tidal tilting flume 'The Metronome' in Py
 The main branch has the following sub-branches, with the following files:
 
 
+
 ## python\_demos\_for\_loading\_dataset
 
 Contains demo scripts to load data from the dataset paper (to be submitted)
@@ -40,6 +41,7 @@ Demo script to load water depth maps derived from 1Hz Overhead orthomosaics, inc
 * ### load\_WaterDepthMaps\_interval.py
 
 Demo script to load water depth maps derived from interval Overhead orthomosaics, including masks
+
 
 
 ## Overhead\_scripts
@@ -138,7 +140,7 @@ Apply Gaussian smoothing of Overhead orthomosaics
 
 * ### 2\_Overhead\_Orthomosaics\_RGB2ColorSpace.py
 
-Transform smoothened RGB orhtomosaics into the relevant colorspaces
+Transform smoothened RGB orthomosaics into the relevant colorspaces
 
 * ### 3\_ConstructRandomForestModels.py
 
@@ -146,15 +148,37 @@ Train the Random Forest Classifier and Regressor models with the Validation data
 
 * ### 4\_RandomForestValidationCalibrationSetup.py
 
-Validate the Random Forest models with the Training and Validation dastsets of their respective dye concentrations
+Validate the Random Forest models with the Training and Validation datasets of their respective dye concentrations
 
 * ### 5\_RandomForestCrossModelValidation.py
 
-Apply cross-model validation of the Random Forest models with the Training and Validation datssets of the other dye concentrations
+Apply cross-model validation of the Random Forest models with the Training and Validation datasets of the other dye concentrations
 
 * ### 6\_RandomForestValidationExperimentalDatasets.py
 
-Validate the Random Forest models with the Experimental datssets
+Validate the Random Forest models with the Experimental datasets
+
+## Source\_Domain-Directed\_Cross-Validation
+
+* ### 1\_Train\_and\_Validate\_Source\_Domain-Directed\_CV\_Models.py
+
+Train and validate the Random Forest models following source domain-directed CV approach
+
+* ### 2\_Validate\_Original\_Models\_on\_Camera\_Exclusive\_Zones\_Training\_imagery.py
+
+Validate the original Random Forest models on the exclusive camera zones of the training imagery
+
+* ### 3\_Validate\_Original\_Models\_on\_Camera\_Exclusive\_Zones\_Burst\_imagery.py
+
+Validate the original Random Forest models on the exclusive camera zones of the burst imagery
+
+* ### 4\_Validate\_All\_Models\_on\_Source\_Domain-Directed\_Experimental\_imagery.py
+
+Validate the original and source domain-directed CV Random Forest models on the exclusive camera zones of the experimental imagery
+
+
+
+
 
 # Software requirements
 
@@ -165,11 +189,11 @@ Validate the Random Forest models with the Experimental datssets
 
 The .nc (NetCDF) files for the DEMs, masks and water depth maps can be read using scripting software such as MATLAB, Python or R. Important is to know how these NetCDF files are constructed. The Python demos provide code to loas these .nc files. They contain the following variables:
 
-X-axis: (start,end,step) of the entire X-axis. In numpy you can extract the whole axis as follows: np.arange(xAxis[0],xAxis[1],xAxis[2])
+X-axis: (start,end,step) of the entire X-axis. In numpy you can extract the whole axis as follows: np.arange(xAxis\[0],xAxis\[1],xAxis\[2])
 
-Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whole axis as follows: np.arange(yAxis[0],yAxis[1],yAxis[2])
+Y-axis: (start,end,step) of the entire Y-axis. In numpy you can extract the whole axis as follows: np.arange(yAxis\[0],yAxis\[1],yAxis\[2])
 
-Z percentiles (only for DEMs): The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. [50])
+Z percentiles (only for DEMs): The Z-percentile values that are stored in the NetCDF file. This is by default only the median (i.e. \[50])
 
 Z-axis (for DEMs): List of Gridded elevation data (meshgrid described in X-axis and Y-axis), stored per percentile. As the default is only median, this list contains by default only one grid
 
@@ -190,7 +214,8 @@ Data supplement to "Remote sensing of a gantry-equipped facility: optimizing acc
 Data supplement to "Quantitative water depth determination in large experimental timeseries through combining spectrophotometry and machine learning" (https://doi.org/10.22541/essoar.177082648.88604562/v1).
 
 
-* DATASET PAPER TO BE SUBMITTED AND SOON AVAILABLE ON YODA
 
+* https://public.yoda.uu.nl/geo/UU01/KKEUY5.html
 
+Data supplement to "Experimental dataset on estuarine hydrodynamics and morphodynamics for various planforms, perturbations and timescales" (submitted).
 
