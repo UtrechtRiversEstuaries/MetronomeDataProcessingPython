@@ -160,6 +160,10 @@ Validate the Random Forest models with the Experimental datasets
 
 ## Source\_Domain-Directed\_Cross-Validation
 
+* ### camMasks
+
+Folder containing the masks for exclusive camera zones and camera buffer zones
+
 * ### 1\_Train\_and\_Validate\_Source\_Domain-Directed\_CV\_Models.py
 
 Train and validate the Random Forest models following source domain-directed CV approach
@@ -175,8 +179,6 @@ Validate the original Random Forest models on the exclusive camera zones of the 
 * ### 4\_Validate\_All\_Models\_on\_Source\_Domain-Directed\_Experimental\_imagery.py
 
 Validate the original and source domain-directed CV Random Forest models on the exclusive camera zones of the experimental imagery
-
-
 
 
 
